@@ -35,13 +35,23 @@
 
 @implementation NSImage (ESSImageCategory)
 
-- (NSData *)representationForFileType: (NSBitmapImageFileType) fileType  withCompression:(CGFloat)comprFactor
+- (NSData *)representationForFileType:(NSBitmapImageFileType)fileType  withCompression:(CGFloat)comprFactor
 {
-	NSData *temp = [self TIFFRepresentation];
-	NSBitmapImageRep *bitmap = [NSBitmapImageRep imageRepWithData:temp];
-	NSData *imgData = [bitmap representationUsingType:fileType properties:[NSDictionary dictionaryWithObject:[NSNumber numberWithDouble:comprFactor]
-																									  forKey:NSImageCompressionFactor]];
-	return imgData;
+	NSData *temp = nil;
+	@try {
+		temp = [self TIFFRepresentation];
+	}
+	@catch (NSException * e) {
+		temp = [self TIFFRepresentationUsingCompression:NSTIFFCompressionLZW factor:comprFactor];
+	}
+	@finally {
+		if (temp == nil)
+			return nil;
+		
+		NSBitmapImageRep *bitmap = [NSBitmapImageRep imageRepWithData:temp];
+		NSData *imgData = [bitmap representationUsingType:fileType properties:[NSDictionary dictionaryWithObject:[NSNumber numberWithDouble:comprFactor] forKey:NSImageCompressionFactor]];
+		return imgData;
+	}
 }
 
 - (NSData *)JPEGRepresentationWithCompression:(CGFloat)comprRate
